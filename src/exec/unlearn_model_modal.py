@@ -196,6 +196,65 @@ class Main:
         self.model.run(self.logger)
 
 
-@app.local_entrypoint()
+
+ctk_image = (
+    modal.Image.from_registry(
+        "nvcr.io/nvidia/pytorch:25.03-py3",
+    )
+    .run_commands(
+        "git clone https://github.com/minhquoc0712/SOUL.git && echo 'ready to go!'"
+    )
+    .run_commands("uv pip install --system dill==0.3.8")
+    .run_commands(
+        "uv pip install --system datasets==2.21.0 wandb transformers peft sentencepiece sentence-transformers==2.6.1"
+    )
+    .pip_install("git+https://github.com/jinghanjia/fastargs")
+    .pip_install(
+        "terminaltables",
+        "sacrebleu",
+        "rouge_score",
+        "matplotlib",
+        "seaborn",
+        "scikit-learn",
+    )
+    .run_commands("uv pip install --system -e ./SOUL/lm-evaluation-harness")
+    .run_commands("cd SOUL")
+).entrypoint(
+    []
+)  # removes chatty prints on entry
+
+
+def nvcc_version():
+ 
+
+
+
+@app.function(gpu="A100", image=ctk_image)
 def run_train():
+       import torch
+
+    print(torch.cuda.get_device_properties("cuda:0"))
+
+    import flash_attn
+
+    print(flash_attn.__version__)
+
+    import subprocess
+
+    # Test image installation
+    import datasets
+
+    print(datasets.__version__)
+
+    import evaluate
+
+    print(f"evaluate: {evaluate.__version__}")
+
+    import peft
+
+    print(f"peft: {peft.__version__}")
+
+    result = subprocess.run(["nvcc", "--version"], check=True)
+    print(result)
+
     Main()
